@@ -1,0 +1,37 @@
+# OAuth secrets — NEVER commit these
+client_secret*.json
+*credentials*.json
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
+/tmp/
+
+# Backups
+*.bak
+*.swp
+
+# Node (reserved for future tooling)
+node_modules/
+npm-debug.log*
+
+# Build artifacts (not used currently)
+dist/
+build/
+
+# Claude / AI assistant local config
+.claude/
+CLAUDE.md.local
+
+# User data dumps (privacy)
+cineflow-export-*.json
+*-projects-backup-*.json
