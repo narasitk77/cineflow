@@ -114,7 +114,7 @@ window.avatarColor = avatarColor;
 window.initials = initials;
 
 // ===== SEEN/UNSEEN BADGES (for changelog "NEW" badge) =====
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 function getLastSeenVersion() { return localStorage.getItem('cf_lastSeenVersion') || '0.0.0'; }
 function markVersionSeen() { localStorage.setItem('cf_lastSeenVersion', APP_VERSION); }
 function hasUnseenChangelog() { return getLastSeenVersion() !== APP_VERSION; }
@@ -125,6 +125,32 @@ window.hasUnseenChangelog = hasUnseenChangelog;
 
 // ===== CHANGELOG DATA =====
 const CHANGELOG = [
+  {
+    version: '1.6.0',
+    date: '2026-05-13',
+    title: 'Script Pro — title page, revisions, page count, sides',
+    sections: [
+      {
+        title: '✨ Script Pro',
+        items: [
+          'Title Page editor — title, written by, based on, draft, contact, copyright',
+          'Revision tracking with industry colored pages (White → Blue → Pink → Yellow → Green …)',
+          'Snapshot & Advance — lock the current draft, move to the next revision color',
+          'Restore any past revision from history',
+          'Estimated page count shown in toolbar (1 page ≈ 1 min screen time)',
+          'Page-eighths helper for scene length notation (e.g. "1 3/8")'
+        ]
+      },
+      {
+        title: '📑 Script Sides',
+        items: [
+          'Generate sides — pick specific scenes, download a trimmed script',
+          'Sides include the current revision name + date header',
+          'Perfect for actor sides or single shoot-day pages'
+        ]
+      }
+    ]
+  },
   {
     version: '1.5.0',
     date: '2026-05-13',

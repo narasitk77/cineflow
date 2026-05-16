@@ -366,6 +366,16 @@ textarea.input-field { resize: vertical; }
 .cs-dist-status.active-viewed    { background: rgba(245,158,11,0.2); color: #fbbf24; border-color: #f59e0b; }
 .cs-dist-status.active-confirmed { background: rgba(16,185,129,0.2); color: #34d399; border-color: #10b981; }
 
+/* ===== SCRIPT PRO ===== */
+.revision-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 1px solid rgba(255,255,255,0.25);
+  flex-shrink: 0;
+}
+
 /* ===== KANBAN ===== */
 .kanban-col {
   background: #1e2330;

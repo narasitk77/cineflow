@@ -6,6 +6,58 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.6.0] — 2026-05-13
+
+### ✍️ Script Pro — title page, revisions, page count, sides
+
+The Script Writer module gains the professional features needed for real
+production: revision tracking, a title page, page estimates, and sides.
+
+---
+
+### ✨ Added
+
+#### Title Page editor
+- Modal editor: title, written by, based on, draft, date, contact, copyright
+- Stored in `project.titlePage`
+
+#### Revision tracking (industry colored pages)
+- Industry-standard revision color sequence: White → Blue → Pink → Yellow →
+  Green → Goldenrod → Buff → Salmon → Cherry
+- **Snapshot & Advance** — locks the current draft as a revision and moves
+  the working copy to the next revision color
+- Full revision history with restore
+- Current revision color shown as a dot in the toolbar
+- Stored in `project.scriptRevisions[]` + `project.currentRevision`
+
+#### Page count estimation
+- Toolbar shows estimated page count (1 page ≈ 1 minute screen time)
+- Weighted line model: scene headings, action wrapping (~60 chars/line),
+  dialogue wrapping (~35 chars/line), ~55 lines per page
+- `pagesToEighths()` helper converts fractions to industry "1 3/8" notation
+
+#### Script Sides generator
+- Pick any subset of scenes → download a trimmed `.txt` of just those scenes
+- Sides header includes the current revision name + date
+- Select-all / clear shortcuts
+
+---
+
+### 📁 New File
+
+```
+js/script-pro.js   # ~290 lines — title page, revisions, page count, sides
+```
+
+New schema fields (backwards compatible):
+```jsonc
+project.titlePage = { title, writtenBy, basedOn, draft, date, contact, copyright }
+project.scriptRevisions = [{ id, colorName, hex, label, date, script:[...] }]
+project.currentRevision = 0   // index into the revision color sequence
+```
+
+---
+
 ## [1.5.0] — 2026-05-13
 
 ### 🎬 Call Sheet Pro — full rewrite for production-day parity

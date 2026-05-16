@@ -247,21 +247,39 @@ function renderScript() {
   if (!p) return;
   const el = document.getElementById('view-script');
   el.innerHTML = `
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
       <div>
         <h2 class="text-xl font-bold">Script Writer</h2>
-        <p class="text-xs text-gray-500 mt-0.5">Industry-standard screenplay formatting</p>
+        <p class="text-xs text-gray-500 mt-0.5">${scriptProSubtitle(p)}</p>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-xs text-gray-600" id="scriptWordCount">0 lines</span>
-        <div class="flex gap-1 bg-dark-900 border border-gray-700 rounded-lg p-1">
-          <button onclick="addScriptLine('scene')" class="px-2 py-1 text-xs rounded font-mono text-blue-400 hover:bg-dark-800" title="Scene Heading">INT/EXT</button>
-          <button onclick="addScriptLine('action')" class="px-2 py-1 text-xs rounded text-gray-300 hover:bg-dark-800" title="Action">Action</button>
-          <button onclick="addScriptLine('character')" class="px-2 py-1 text-xs rounded text-yellow-400 hover:bg-dark-800" title="Character">Char.</button>
-          <button onclick="addScriptLine('dialogue')" class="px-2 py-1 text-xs rounded text-green-400 hover:bg-dark-800" title="Dialogue">Dialog</button>
-          <button onclick="addScriptLine('parenthetical')" class="px-2 py-1 text-xs rounded text-purple-400 hover:bg-dark-800" title="Parenthetical">Paren.</button>
-          <button onclick="addScriptLine('transition')" class="px-2 py-1 text-xs rounded text-red-400 hover:bg-dark-800" title="Transition">Trans.</button>
-        </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button onclick="openTitlePageModal()" class="btn btn-secondary btn-sm" title="Edit title page">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span class="hidden sm:inline">Title Page</span>
+        </button>
+        <button onclick="showRevisionsPanel()" class="btn btn-secondary btn-sm" title="Revision history">
+          <span class="revision-dot" style="background:${currentRevisionColor(p)}"></span>
+          <span class="hidden sm:inline">Revisions</span>
+        </button>
+        <button onclick="openSidesGenerator()" class="btn btn-secondary btn-sm" title="Generate script sides">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+          <span class="hidden sm:inline">Sides</span>
+        </button>
+      </div>
+    </div>
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+      <div class="flex items-center gap-2 text-xs text-gray-600">
+        <span id="scriptWordCount">0 lines</span>
+        <span class="text-gray-700">·</span>
+        <span title="Estimated page count (1 page ≈ 1 min screen time)">~${estimatePageCount(p.script)} pages</span>
+      </div>
+      <div class="flex gap-1 bg-dark-900 border border-gray-700 rounded-lg p-1">
+        <button onclick="addScriptLine('scene')" class="px-2 py-1 text-xs rounded font-mono text-blue-400 hover:bg-dark-800" title="Scene Heading">INT/EXT</button>
+        <button onclick="addScriptLine('action')" class="px-2 py-1 text-xs rounded text-gray-300 hover:bg-dark-800" title="Action">Action</button>
+        <button onclick="addScriptLine('character')" class="px-2 py-1 text-xs rounded text-yellow-400 hover:bg-dark-800" title="Character">Char.</button>
+        <button onclick="addScriptLine('dialogue')" class="px-2 py-1 text-xs rounded text-green-400 hover:bg-dark-800" title="Dialogue">Dialog</button>
+        <button onclick="addScriptLine('parenthetical')" class="px-2 py-1 text-xs rounded text-purple-400 hover:bg-dark-800" title="Parenthetical">Paren.</button>
+        <button onclick="addScriptLine('transition')" class="px-2 py-1 text-xs rounded text-red-400 hover:bg-dark-800" title="Transition">Trans.</button>
       </div>
     </div>
     <!-- Script Paper -->
