@@ -1059,6 +1059,7 @@ function addCallSheet() {
   csIndex = fresh.callSheets.length - 1;
   renderCallSheet();
   showToast('New call sheet day added', 'success');
+  if (typeof logActivity === 'function') logActivity('callsheet', 'added a new call sheet day');
 }
 function deleteCallSheet(i) {
   const fresh = getProject();
@@ -1667,6 +1668,7 @@ function saveProjectEdit() {
   closeModal('editProjectModal');
   loadProjectHeader();
   renderModule(currentModule);
+  if (typeof logActivity === 'function') logActivity('edit', 'updated project details');
 }
 
 // ============================================================
@@ -1702,6 +1704,7 @@ function loadProjectHeader() {
     statusEl.className = 'status-badge status-' + p.status;
     statusEl.textContent = statusLabels[p.status] || p.status;
   }
+  if (typeof updateCollabBadge === 'function') updateCollabBadge();
 }
 
 // ============================================================

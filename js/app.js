@@ -52,6 +52,19 @@ function createProject() {
     calendar: [],
     moodboard: []
   };
+  // Apply selected project template (pre-populates tasks, calendar, etc.)
+  if (typeof applyProjectTemplate === 'function' && selectedTemplate && selectedTemplate !== 'blank') {
+    applyProjectTemplate(selectedTemplate, project);
+  }
+  // Seed an initial activity entry
+  project.activity = [{
+    id: 'act_' + Date.now(),
+    action: 'create',
+    detail: `created project "${title}"` + (selectedTemplate && selectedTemplate !== 'blank' ? ` from ${selectedTemplate} template` : ''),
+    ts: new Date().toISOString(),
+    user: (typeof getUserName === 'function') ? getUserName() : 'Me'
+  }];
+  project.comments = [];
   projects.push(project);
   saveProjects(projects);
   closeModal('newProjectModal');
@@ -70,6 +83,8 @@ function clearNewProjectForm() {
   document.querySelectorAll('.color-swatch').forEach(s => { s.style.outline = ''; s.style.outlineOffset = ''; });
   const first = document.querySelector('.color-swatch[data-color="#0ea5e9"]');
   if (first) { first.style.outline = '2px solid #0ea5e9'; first.style.outlineOffset = '2px'; }
+  selectedTemplate = 'blank';
+  renderTemplatePicker();
 }
 
 // ---- DELETE / DUPLICATE ----
@@ -239,11 +254,32 @@ function seedDemoData() {
   saveProjects(projects);
 }
 
+// ---- PROJECT TEMPLATE PICKER ----
+let selectedTemplate = 'blank';
+function renderTemplatePicker() {
+  const wrap = document.getElementById('templatePicker');
+  if (!wrap || typeof PROJECT_TEMPLATES === 'undefined') return;
+  wrap.innerHTML = Object.entries(PROJECT_TEMPLATES).map(([key, t]) => `
+    <button onclick="selectTemplate('${key}')" id="tpl-${key}"
+      class="template-card ${key===selectedTemplate?'active':''}">
+      <div class="text-sm font-semibold">${t.label}</div>
+      <div class="text-xs text-gray-500 mt-0.5">${t.desc}</div>
+    </button>`).join('');
+}
+function selectTemplate(key) {
+  selectedTemplate = key;
+  document.querySelectorAll('.template-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('tpl-' + key)?.classList.add('active');
+}
+window.selectTemplate = selectTemplate;
+window.renderTemplatePicker = renderTemplatePicker;
+
 // ---- INIT ----
 window.addEventListener('DOMContentLoaded', () => {
   seedDemoData();
   renderProjects();
   updateStats();
+  renderTemplatePicker();
   // init color swatch
   const first = document.querySelector('.color-swatch[data-color="#0ea5e9"]');
   if (first) { first.style.outline = '2px solid #0ea5e9'; first.style.outlineOffset = '2px'; }

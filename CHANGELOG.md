@@ -6,6 +6,56 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.8.0] — 2026-05-13
+
+### 👥 Collaboration — comments, activity log, project templates
+
+The final piece of the v1.5–1.8 "Pro" series: collaboration features so a
+team can work in the same project together.
+
+---
+
+### ✨ Added
+
+#### Comments
+- Leave comments on any module (review notes, reminders, questions)
+- Slide-in **Collaboration panel** opened from the comment icon in the top nav
+- Comments carry author, timestamp, and the module they were posted on
+- **Resolve / reopen** comments
+- Unresolved-comment count badge on the nav icon
+- Author name is configurable (stored in `localStorage` key `cf_user_name`)
+
+#### Activity Log
+- Auto-tracked history of project changes
+- Hooked into: project edits, script revisions, call sheet days, comments
+- **Activity tab** in the Collaboration panel
+- Relative timestamps ("just now", "2h ago", "3d ago")
+- Capped at 200 entries to keep storage lean
+
+#### Project Templates
+- **5 starting templates** in the New Project dialog:
+  - Blank · Commercial / Ad · Music Video · Short Film · Documentary
+- Templates pre-populate task lists and calendar milestones tuned to the
+  production type
+- New projects seed an initial activity entry
+
+---
+
+### 📁 New File
+
+```
+js/collaboration.js   # ~330 lines — comments, activity log, templates
+```
+
+New schema fields (backwards compatible):
+```jsonc
+project.comments = [{ id, text, target, author, ts, resolved }]
+project.activity = [{ id, action, detail, ts, user }]
+localStorage['cf_user_name'] = "..."   // comment/activity author
+```
+
+---
+
 ## [1.7.0] — 2026-05-13
 
 ### 📋 Breakdown Pro — element database & DOOD report

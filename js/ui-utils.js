@@ -114,7 +114,7 @@ window.avatarColor = avatarColor;
 window.initials = initials;
 
 // ===== SEEN/UNSEEN BADGES (for changelog "NEW" badge) =====
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.8.0';
 function getLastSeenVersion() { return localStorage.getItem('cf_lastSeenVersion') || '0.0.0'; }
 function markVersionSeen() { localStorage.setItem('cf_lastSeenVersion', APP_VERSION); }
 function hasUnseenChangelog() { return getLastSeenVersion() !== APP_VERSION; }
@@ -125,6 +125,38 @@ window.hasUnseenChangelog = hasUnseenChangelog;
 
 // ===== CHANGELOG DATA =====
 const CHANGELOG = [
+  {
+    version: '1.8.0',
+    date: '2026-05-13',
+    title: 'Collaboration — comments, activity log, project templates',
+    sections: [
+      {
+        title: '💬 Comments',
+        items: [
+          'Leave comments on any module — review notes, reminders, questions',
+          'Slide-in Collaboration panel from the top nav comment icon',
+          'Resolve / reopen comments; unresolved count badge in the nav',
+          'Each comment tagged with author, timestamp, and module'
+        ]
+      },
+      {
+        title: '📋 Activity Log',
+        items: [
+          'Auto-tracked history of project changes (edits, revisions, call sheets)',
+          'Activity tab in the Collaboration panel',
+          'Relative timestamps ("2h ago", "3d ago")'
+        ]
+      },
+      {
+        title: '🗂️ Project Templates',
+        items: [
+          '5 starting templates: Blank, Commercial, Music Video, Short Film, Documentary',
+          'Templates pre-populate tasks and calendar milestones',
+          'Pick a template right in the New Project dialog'
+        ]
+      }
+    ]
+  },
   {
     version: '1.7.0',
     date: '2026-05-13',

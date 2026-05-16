@@ -189,6 +189,7 @@ function saveScriptRevision() {
   });
   document.getElementById('revisionsModal')?.remove();
   showToast(`${color.name} revision locked — now on ${REVISION_COLORS[(curIdx+1)%REVISION_COLORS.length].name}`, 'success');
+  if (typeof logActivity === 'function') logActivity('revision', `locked the ${color.name} script revision`);
   renderScript();
 }
 window.saveScriptRevision = saveScriptRevision;
