@@ -6,6 +6,89 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.5.0] — 2026-05-13
+
+### 🎬 Call Sheet Pro — full rewrite for production-day parity
+
+The Call Sheet module was rebuilt from the ground up to match how StudioBinder
+handles shoot-day logistics. The old single flat call-sheet object is now an
+array of full call-sheet objects, one per shoot day.
+
+---
+
+### ✨ Added
+
+#### Multi-day call sheets
+- One **call sheet per shoot day** — switch with day tabs at the top
+- **+ Day** button adds another shoot day
+- Delete individual days (keeps at least one)
+- Each day has its own complete data set
+
+#### Department call times
+- New **Department Call Times** block — set a call time per department
+- 13 departments (Directing, Camera, Sound, Lighting/Grip, Art, Costume,
+  Make-Up, Cast, Production, Post, Catering, Transport, Other)
+- Per-department notes field
+
+#### Weather block
+- Conditions dropdown (Sunny, Cloudy, Rain, Thunderstorm, Hazy, Hot, …)
+- High / Low temperature (°C)
+- Sunrise / Sunset times
+
+#### Schedule block
+- General Call · Crew Call · Shooting Call · First Shot · Lunch · Est. Wrap
+
+#### Emergency / Safety block
+- Nearest hospital + address + phone
+- Dedicated safety notes textarea (stunts, hazards, COVID, contingency)
+
+#### Location upgrades
+- Google Maps link field with one-click **Open** button
+- Parking / Basecamp field
+
+#### Scene schedule upgrades
+- Each scene row now tracks **D/N** (Day/Night/Dawn/Dusk) and **Cast**
+- 12-column grid layout
+
+#### Distribution & confirmation tracking
+- Track every recipient through 4 states: **Pending → Sent → Viewed → Confirmed**
+- One-click **+ Add all contacts**
+- Live counters: how many pending / sent / viewed / confirmed
+- Per-recipient status buttons
+
+#### Templates
+- **Save as Template** — store a call sheet layout for reuse
+- **Templates** picker — apply a saved template to any day
+- Templates auto-strip day-specific data (date, scenes, distribution list)
+- Stored in `localStorage` key `cf_cs_templates`
+
+---
+
+### 🔧 Data Migration
+
+Old `callSheets[0]` flat object is auto-migrated on first open:
+- Wrapped into the new array-of-objects format
+- Gets an `id`, plus empty `weather`, `deptCalls`, `distribution` arrays
+- **Backwards compatible** — existing call sheet data is preserved
+
+New schema:
+```jsonc
+project.callSheets = [{
+  id, title, date, day, director, producer, ad, ad2, upm,
+  generalCall, crewCall, shootCall, firstShot, lunch, wrap,
+  location, address, mapLink, parking,
+  hospital, hospitalAddress, hospitalPhone,
+  weather: { conditions, high, low, sunrise, sunset },
+  scenes: [{ num, heading, dn, pages, cast }],
+  deptCalls: [{ dept, time, notes }],
+  distribution: [{ contactId, name, status, sentAt }],
+  notes, safetyNotes
+}]
+localStorage['cf_cs_templates'] = [{ id, name, data }]
+```
+
+---
+
 ## [1.4.0] — 2026-05-13
 
 ### 🔄 Import from Google Docs & Sheets + Connection Diagnostics

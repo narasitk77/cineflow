@@ -114,7 +114,7 @@ window.avatarColor = avatarColor;
 window.initials = initials;
 
 // ===== SEEN/UNSEEN BADGES (for changelog "NEW" badge) =====
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 function getLastSeenVersion() { return localStorage.getItem('cf_lastSeenVersion') || '0.0.0'; }
 function markVersionSeen() { localStorage.setItem('cf_lastSeenVersion', APP_VERSION); }
 function hasUnseenChangelog() { return getLastSeenVersion() !== APP_VERSION; }
@@ -125,6 +125,42 @@ window.hasUnseenChangelog = hasUnseenChangelog;
 
 // ===== CHANGELOG DATA =====
 const CHANGELOG = [
+  {
+    version: '1.5.0',
+    date: '2026-05-13',
+    title: 'Call Sheet Pro — multi-day, departments, weather, distribution',
+    sections: [
+      {
+        title: '✨ Call Sheet Pro',
+        items: [
+          'Multiple call sheets per project — one tab per shoot day',
+          'Department call times — set call per department (Camera @ 06:00, Art @ 05:30)',
+          'Weather block — conditions, high/low temp, sunrise/sunset',
+          'Schedule block — general/crew/shooting call, first shot, lunch, est. wrap',
+          'Emergency block — hospital name/address/phone + safety notes',
+          'Google Maps link field with one-click Open button',
+          'Scene schedule now tracks D/N (Day/Night) + cast per scene'
+        ]
+      },
+      {
+        title: '📤 Distribution Tracking',
+        items: [
+          'Track who received the call sheet: Pending → Sent → Viewed → Confirmed',
+          'One-click "Add all contacts" to distribution list',
+          'Live confirmation counter at the bottom',
+          'Per-recipient status buttons'
+        ]
+      },
+      {
+        title: '💾 Templates',
+        items: [
+          'Save any call sheet as a reusable template',
+          'Apply templates to new shoot days instantly',
+          'Templates strip day-specific data (date, scenes, distribution)'
+        ]
+      }
+    ]
+  },
   {
     version: '1.4.0',
     date: '2026-05-13',

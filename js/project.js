@@ -699,26 +699,80 @@ function deleteShot(id) {
 // ============================================================
 // CALL SHEET MODULE
 // ============================================================
+// ============================================================
+// CALL SHEET PRO — multi-sheet, departments, weather, distribution
+// ============================================================
+let csIndex = 0;  // currently-active call sheet
+
+// Migrate old single-object format → array of full call-sheet objects
+function ensureCallSheets(p) {
+  if (!p.callSheets) p.callSheets = [];
+  // Old format: callSheets[0] was a flat object without id
+  p.callSheets = p.callSheets.map((cs, i) => {
+    if (!cs.id) cs.id = 'cs_' + Date.now() + '_' + i;
+    if (!cs.scenes) cs.scenes = [];
+    if (!cs.deptCalls) cs.deptCalls = [];
+    if (!cs.weather) cs.weather = {};
+    if (!cs.distribution) cs.distribution = [];
+    return cs;
+  });
+  if (p.callSheets.length === 0) {
+    p.callSheets.push(newCallSheetObject(p, 1));
+  }
+  if (csIndex >= p.callSheets.length) csIndex = p.callSheets.length - 1;
+  if (csIndex < 0) csIndex = 0;
+}
+
+function newCallSheetObject(p, dayNum) {
+  return {
+    id: 'cs_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    title: p.title, date: '', day: String(dayNum || 1),
+    director: p.director || '', producer: '', ad: '', ad2: '', upm: '',
+    generalCall: '07:00', crewCall: '', shootCall: '', firstShot: '', lunch: '', wrap: '',
+    location: '', address: '', mapLink: '', parking: '', basecamp: '',
+    hospital: '', hospitalAddress: '', hospitalPhone: '',
+    weather: { conditions: '', high: '', low: '', sunrise: '', sunset: '' },
+    scenes: [], deptCalls: [], distribution: [],
+    notes: '', safetyNotes: ''
+  };
+}
+
+function getCS(p) {
+  ensureCallSheets(p);
+  return p.callSheets[csIndex];
+}
+
 function renderCallSheet() {
   const p = getProject();
   if (!p) return;
+  updateProject(pp => ensureCallSheets(pp));  // migrate + persist
+  const fresh = getProject();
+  const contacts = fresh.contacts || [];
+  const cs = fresh.callSheets[csIndex];
   const el = document.getElementById('view-callsheet');
-  const contacts = p.contacts || [];
-  const cs = p.callSheets?.[0] || {};
+
+  // Department grouping for crew call times
+  const byDept = {};
+  contacts.forEach(c => {
+    const d = c.dept || 'Other';
+    if (!byDept[d]) byDept[d] = [];
+    byDept[d].push(c);
+  });
+
   el.innerHTML = `
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
       <div>
         <h2 class="text-xl font-bold">Call Sheet</h2>
-        <p class="text-xs text-gray-500 mt-0.5">Build and share daily call sheets</p>
+        <p class="text-xs text-gray-500 mt-0.5">${fresh.callSheets.length} call sheet${fresh.callSheets.length===1?'':'s'} · build & distribute per shoot day</p>
       </div>
       <div class="flex items-center gap-2 flex-wrap">
+        <button onclick="showTemplatePicker()" class="btn btn-secondary btn-sm" title="Load a saved template">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          <span class="hidden sm:inline">Templates</span>
+        </button>
         <button onclick="gwsEmailCallSheet(getProject())" class="btn btn-secondary btn-sm" title="Send to crew via Gmail">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-          <span class="hidden sm:inline">Email via Gmail</span><span class="sm:hidden">Email</span>
-        </button>
-        <button onclick="gwsExportProjectToDrive(getProject())" class="btn btn-secondary btn-sm" title="Export project to Google Drive">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3-3m0 0l3 3m-3-3v-9"/></svg>
-          <span class="hidden sm:inline">Drive</span>
+          <span class="hidden sm:inline">Email</span>
         </button>
         <button onclick="printCallSheet()" class="btn btn-secondary btn-sm">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
@@ -726,29 +780,96 @@ function renderCallSheet() {
         </button>
       </div>
     </div>
+
+    <!-- Day tabs -->
+    <div class="flex items-center gap-1 mb-4 overflow-x-auto pb-1 border-b border-gray-800">
+      ${fresh.callSheets.map((sheet,i)=>`
+        <button onclick="switchCallSheet(${i})" class="cs-day-tab ${i===csIndex?'active':''}">
+          Day ${escapeHtml(sheet.day||String(i+1))}${sheet.date?` · ${formatDateShort(sheet.date)}`:''}
+        </button>`).join('')}
+      <button onclick="addCallSheet()" class="cs-day-tab-add" title="Add another shoot day">+ Day</button>
+    </div>
+
     <div id="callSheetBody">
-      <!-- Header Block -->
+      <!-- Production Header -->
       <div class="call-sheet-block mb-4">
-        <div class="call-sheet-block-header">📄 Production Header</div>
-        <div class="p-4 grid grid-cols-2 md:grid-cols-3 gap-3">
-          <div><label class="text-xs text-gray-500 mb-1 block">Production Title</label><input type="text" id="cs_title" value="${escapeHtml(cs.title||p.title)}" oninput="updateCS('title',this.value)" class="input-field w-full text-sm"></div>
-          <div><label class="text-xs text-gray-500 mb-1 block">Shoot Date</label><input type="date" id="cs_date" value="${cs.date||''}" oninput="updateCS('date',this.value)" class="input-field w-full text-sm"></div>
-          <div><label class="text-xs text-gray-500 mb-1 block">Day #</label><input type="text" id="cs_day" value="${escapeHtml(cs.day||'1')}" oninput="updateCS('day',this.value)" class="input-field w-full text-sm"></div>
-          <div><label class="text-xs text-gray-500 mb-1 block">Director</label><input type="text" id="cs_director" value="${escapeHtml(cs.director||p.director||'')}" oninput="updateCS('director',this.value)" class="input-field w-full text-sm"></div>
-          <div><label class="text-xs text-gray-500 mb-1 block">Producer</label><input type="text" id="cs_producer" value="${escapeHtml(cs.producer||'')}" oninput="updateCS('producer',this.value)" class="input-field w-full text-sm"></div>
-          <div><label class="text-xs text-gray-500 mb-1 block">1st AD</label><input type="text" id="cs_ad" value="${escapeHtml(cs.ad||'')}" oninput="updateCS('ad',this.value)" class="input-field w-full text-sm"></div>
+        <div class="call-sheet-block-header flex w-full justify-between">
+          <span>📄 Production Header</span>
+          ${fresh.callSheets.length>1?`<button onclick="deleteCallSheet(${csIndex})" class="text-red-500 hover:text-red-400 text-xs font-normal">Delete this day</button>`:''}
+        </div>
+        <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+          ${csField('Production Title','title',cs.title)}
+          ${csField('Shoot Date','date',cs.date,'date')}
+          ${csField('Day #','day',cs.day)}
+          ${csField('Director','director',cs.director)}
+          ${csField('Producer','producer',cs.producer)}
+          ${csField('1st AD','ad',cs.ad)}
+          ${csField('2nd AD','ad2',cs.ad2)}
+          ${csField('UPM','upm',cs.upm)}
         </div>
       </div>
+
+      <!-- Schedule Times -->
+      <div class="call-sheet-block mb-4">
+        <div class="call-sheet-block-header">⏰ Schedule</div>
+        <div class="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          ${csField('General Call','generalCall',cs.generalCall,'time')}
+          ${csField('Crew Call','crewCall',cs.crewCall,'time')}
+          ${csField('Shooting Call','shootCall',cs.shootCall,'time')}
+          ${csField('First Shot','firstShot',cs.firstShot,'time')}
+          ${csField('Lunch','lunch',cs.lunch,'time')}
+          ${csField('Est. Wrap','wrap',cs.wrap,'time')}
+        </div>
+      </div>
+
       <!-- Location -->
       <div class="call-sheet-block mb-4">
         <div class="call-sheet-block-header">📍 Location</div>
         <div class="p-4 grid grid-cols-2 gap-3">
-          <div><label class="text-xs text-gray-500 mb-1 block">Location Name</label><input type="text" id="cs_location" value="${escapeHtml(cs.location||'')}" oninput="updateCS('location',this.value)" class="input-field w-full text-sm"></div>
-          <div><label class="text-xs text-gray-500 mb-1 block">Address</label><input type="text" id="cs_address" value="${escapeHtml(cs.address||'')}" oninput="updateCS('address',this.value)" class="input-field w-full text-sm"></div>
-          <div><label class="text-xs text-gray-500 mb-1 block">General Call Time</label><input type="time" id="cs_calltime" value="${cs.calltime||'07:00'}" oninput="updateCS('calltime',this.value)" class="input-field w-full text-sm"></div>
-          <div><label class="text-xs text-gray-500 mb-1 block">Nearest Hospital</label><input type="text" id="cs_hospital" value="${escapeHtml(cs.hospital||'')}" oninput="updateCS('hospital',this.value)" class="input-field w-full text-sm"></div>
+          ${csField('Location Name','location',cs.location)}
+          ${csField('Address','address',cs.address)}
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Google Maps Link</label>
+            <div class="flex gap-1">
+              <input type="text" value="${escapeHtml(cs.mapLink||'')}" oninput="updateCS('mapLink',this.value)" class="input-field w-full text-sm" placeholder="Paste Maps URL">
+              ${cs.mapLink?`<a href="${escapeHtml(cs.mapLink)}" target="_blank" class="btn btn-secondary btn-sm flex-shrink-0">Open</a>`:''}
+            </div>
+          </div>
+          ${csField('Parking / Basecamp','parking',cs.parking)}
         </div>
       </div>
+
+      <!-- Weather -->
+      <div class="call-sheet-block mb-4">
+        <div class="call-sheet-block-header">🌤️ Weather</div>
+        <div class="p-4 grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Conditions</label>
+            <select onchange="updateCSWeather('conditions',this.value)" class="input-field w-full text-sm">
+              ${['','Sunny','Partly Cloudy','Cloudy','Overcast','Light Rain','Rain','Thunderstorm','Hazy','Hot'].map(o=>`<option ${(cs.weather?.conditions||'')===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+          ${csWeatherField('High °C','high',cs.weather?.high)}
+          ${csWeatherField('Low °C','low',cs.weather?.low)}
+          ${csWeatherField('Sunrise','sunrise',cs.weather?.sunrise,'time')}
+          ${csWeatherField('Sunset','sunset',cs.weather?.sunset,'time')}
+        </div>
+      </div>
+
+      <!-- Emergency -->
+      <div class="call-sheet-block mb-4">
+        <div class="call-sheet-block-header">🚑 Emergency / Safety</div>
+        <div class="p-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+          ${csField('Nearest Hospital','hospital',cs.hospital)}
+          ${csField('Hospital Address','hospitalAddress',cs.hospitalAddress)}
+          ${csField('Hospital Phone','hospitalPhone',cs.hospitalPhone)}
+        </div>
+        <div class="px-4 pb-4">
+          <label class="text-xs text-gray-500 mb-1 block">Safety Notes</label>
+          <textarea oninput="updateCS('safetyNotes',this.value)" class="input-field w-full text-sm resize-none" rows="2" placeholder="Stunts, hazards, COVID protocol, weather contingency...">${escapeHtml(cs.safetyNotes||'')}</textarea>
+        </div>
+      </div>
+
       <!-- Scene Schedule -->
       <div class="call-sheet-block mb-4">
         <div class="call-sheet-block-header justify-between flex w-full">
@@ -756,82 +877,269 @@ function renderCallSheet() {
           <button onclick="addCSScene()" class="text-brand-400 hover:text-brand-300 text-xs font-normal">+ Add Scene</button>
         </div>
         <div class="p-4">
-          <div id="csScenesBody">
-            ${(cs.scenes||[]).length===0?'<p class="text-xs text-gray-600">No scenes scheduled. Click "+ Add Scene" to add.</p>':
-              (cs.scenes||[]).map((s,i)=>`
-              <div class="flex items-center gap-2 mb-2">
-                <input value="${escapeHtml(s.num||'')}" class="input-field text-xs w-12" placeholder="SC" oninput="updateCSScene(${i},'num',this.value)">
-                <input value="${escapeHtml(s.heading||'')}" class="input-field text-xs flex-1" placeholder="Scene heading" oninput="updateCSScene(${i},'heading',this.value)">
-                <input value="${escapeHtml(s.pages||'')}" class="input-field text-xs w-16" placeholder="Pages" oninput="updateCSScene(${i},'pages',this.value)">
-                <button onclick="removeCSScene(${i})" class="text-red-600 hover:text-red-400"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
-              </div>`).join('')}
+          ${(cs.scenes||[]).length===0?'<p class="text-xs text-gray-600">No scenes scheduled. Click "+ Add Scene".</p>':`
+          <div class="grid grid-cols-12 gap-2 text-xs text-gray-500 font-medium uppercase mb-1 px-1">
+            <div class="col-span-1">SC#</div><div class="col-span-5">Scene Heading</div>
+            <div class="col-span-2">D/N</div><div class="col-span-1">Pages</div>
+            <div class="col-span-2">Cast</div><div class="col-span-1"></div>
           </div>
+          ${(cs.scenes||[]).map((s,i)=>`
+            <div class="grid grid-cols-12 gap-2 mb-2 items-center">
+              <input value="${escapeHtml(s.num||'')}" class="input-field text-xs col-span-1" placeholder="1" oninput="updateCSScene(${i},'num',this.value)">
+              <input value="${escapeHtml(s.heading||'')}" class="input-field text-xs col-span-5" placeholder="INT. LOCATION - DAY" oninput="updateCSScene(${i},'heading',this.value)">
+              <select class="input-field text-xs col-span-2" onchange="updateCSScene(${i},'dn',this.value)">
+                ${['Day','Night','Dawn','Dusk'].map(o=>`<option ${(s.dn||'Day')===o?'selected':''}>${o}</option>`).join('')}
+              </select>
+              <input value="${escapeHtml(s.pages||'')}" class="input-field text-xs col-span-1" placeholder="1/8" oninput="updateCSScene(${i},'pages',this.value)">
+              <input value="${escapeHtml(s.cast||'')}" class="input-field text-xs col-span-2" placeholder="Cast IDs" oninput="updateCSScene(${i},'cast',this.value)">
+              <button onclick="removeCSScene(${i})" class="text-red-600 hover:text-red-400 col-span-1 flex justify-center"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>`).join('')}`}
         </div>
       </div>
-      <!-- Cast & Crew Call Times -->
+
+      <!-- Department Call Times -->
       <div class="call-sheet-block mb-4">
-        <div class="call-sheet-block-header">👥 Cast & Crew Call Times</div>
+        <div class="call-sheet-block-header justify-between flex w-full">
+          <span>🏢 Department Call Times</span>
+          <button onclick="addDeptCall()" class="text-brand-400 hover:text-brand-300 text-xs font-normal">+ Add Department</button>
+        </div>
         <div class="p-4">
-          ${contacts.length===0?`<p class="text-xs text-gray-600">Add contacts in the Contacts module first.</p>`:''}
-          <div class="space-y-2">
-            ${contacts.map(c=>`
-              <div class="flex items-center gap-3 py-2 border-b border-gray-800 last:border-0">
-                <div class="contact-avatar w-7 h-7 text-xs" style="background:${avatarColor(c.name)}">${initials(c.name)}</div>
-                <div class="flex-1"><div class="text-sm font-medium">${escapeHtml(c.name)}</div><div class="text-xs text-gray-500">${escapeHtml(c.role||'')}</div></div>
-                <input type="time" value="${c.callTime||'07:00'}" onchange="updateContactCallTime('${c.id}',this.value)" class="input-field text-xs py-1 w-24">
-              </div>`).join('')}
-          </div>
+          ${(cs.deptCalls||[]).length===0?'<p class="text-xs text-gray-600">Set call times per department (e.g. Camera @ 06:00, Art @ 05:30).</p>':`
+          ${(cs.deptCalls||[]).map((d,i)=>`
+            <div class="flex items-center gap-2 mb-2">
+              <select class="input-field text-xs flex-1" onchange="updateDeptCall(${i},'dept',this.value)">
+                ${['Directing','Camera','Sound','Lighting/Grip','Art Department','Costume','Make-Up','Cast / Talent','Production','Post-Production','Catering','Transport','Other'].map(o=>`<option ${(d.dept||'')===o?'selected':''}>${o}</option>`).join('')}
+              </select>
+              <input type="time" value="${d.time||'07:00'}" class="input-field text-xs w-28" onchange="updateDeptCall(${i},'time',this.value)">
+              <input value="${escapeHtml(d.notes||'')}" class="input-field text-xs flex-1" placeholder="Notes (location, etc.)" oninput="updateDeptCall(${i},'notes',this.value)">
+              <button onclick="removeDeptCall(${i})" class="text-red-600 hover:text-red-400"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>`).join('')}`}
         </div>
       </div>
-      <!-- Advanced Schedule / Notes -->
+
+      <!-- Individual Crew Call Times (grouped by dept) -->
       <div class="call-sheet-block mb-4">
-        <div class="call-sheet-block-header">📝 Notes & Special Instructions</div>
+        <div class="call-sheet-block-header">👥 Individual Call Times</div>
         <div class="p-4">
-          <textarea id="cs_notes" oninput="updateCS('notes',this.value)" class="input-field w-full h-24 resize-none text-sm" placeholder="Weather, parking, special instructions, safety notes...">${escapeHtml(cs.notes||'')}</textarea>
+          ${contacts.length===0?`<p class="text-xs text-gray-600">Add contacts in the Contacts module first.</p>`:
+          Object.keys(byDept).sort().map(dept=>`
+            <div class="mb-3">
+              <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">${escapeHtml(dept)}</div>
+              ${byDept[dept].map(c=>`
+                <div class="flex items-center gap-3 py-1.5 border-b border-gray-800 last:border-0">
+                  <div class="contact-avatar w-7 h-7 text-xs" style="background:${avatarColor(c.name)}">${initials(c.name)}</div>
+                  <div class="flex-1 min-w-0"><div class="text-sm font-medium truncate">${escapeHtml(c.name)}</div><div class="text-xs text-gray-500 truncate">${escapeHtml(c.role||'')}</div></div>
+                  <input type="time" value="${c.callTime||'07:00'}" onchange="updateContactCallTime('${c.id}',this.value)" class="input-field text-xs py-1 w-24">
+                </div>`).join('')}
+            </div>`).join('')}
         </div>
+      </div>
+
+      <!-- Distribution Tracking -->
+      <div class="call-sheet-block mb-4">
+        <div class="call-sheet-block-header justify-between flex w-full">
+          <span>📤 Distribution & Confirmation</span>
+          <button onclick="addAllToDistribution()" class="text-brand-400 hover:text-brand-300 text-xs font-normal">+ Add all contacts</button>
+        </div>
+        <div class="p-4">
+          ${(cs.distribution||[]).length===0?'<p class="text-xs text-gray-600">Track who received the call sheet and who confirmed. Click "+ Add all contacts".</p>':`
+          <div class="space-y-1.5">
+            ${(cs.distribution||[]).map((d,i)=>{
+              const c = contacts.find(x=>x.id===d.contactId);
+              const name = c?c.name:(d.name||'Unknown');
+              return `<div class="flex items-center gap-3 py-1.5 border-b border-gray-800 last:border-0">
+                <div class="contact-avatar w-6 h-6 text-xs" style="background:${avatarColor(name)}">${initials(name)}</div>
+                <span class="text-sm flex-1 truncate">${escapeHtml(name)}</span>
+                <div class="flex gap-1">
+                  ${['pending','sent','viewed','confirmed'].map(st=>`
+                    <button onclick="setDistStatus(${i},'${st}')" class="cs-dist-status ${d.status===st?'active-'+st:''}" title="${st}">${st==='pending'?'○':st==='sent'?'→':st==='viewed'?'👁':'✓'}</button>
+                  `).join('')}
+                </div>
+                <button onclick="removeDistribution(${i})" class="text-red-700 hover:text-red-400"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+              </div>`;
+            }).join('')}
+          </div>
+          <div class="mt-3 flex gap-3 text-xs text-gray-500">
+            <span>○ Pending: ${cs.distribution.filter(d=>!d.status||d.status==='pending').length}</span>
+            <span>→ Sent: ${cs.distribution.filter(d=>d.status==='sent').length}</span>
+            <span>👁 Viewed: ${cs.distribution.filter(d=>d.status==='viewed').length}</span>
+            <span class="text-green-400">✓ Confirmed: ${cs.distribution.filter(d=>d.status==='confirmed').length}</span>
+          </div>`}
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="call-sheet-block mb-4">
+        <div class="call-sheet-block-header">📝 General Notes</div>
+        <div class="p-4">
+          <textarea oninput="updateCS('notes',this.value)" class="input-field w-full h-24 resize-none text-sm" placeholder="Catering, walkie channels, special instructions...">${escapeHtml(cs.notes||'')}</textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="saveCallSheetTemplate()" class="btn btn-secondary btn-sm">💾 Save as Template</button>
       </div>
     </div>
   `;
 }
 
+// ---- Call Sheet field helpers ----
+function csField(label, field, val, type) {
+  return `<div>
+    <label class="text-xs text-gray-500 mb-1 block">${label}</label>
+    <input type="${type||'text'}" value="${escapeHtml(val||'')}" oninput="updateCS('${field}',this.value)" class="input-field w-full text-sm">
+  </div>`;
+}
+function csWeatherField(label, field, val, type) {
+  return `<div>
+    <label class="text-xs text-gray-500 mb-1 block">${label}</label>
+    <input type="${type||'text'}" value="${escapeHtml(val||'')}" oninput="updateCSWeather('${field}',this.value)" class="input-field w-full text-sm">
+  </div>`;
+}
+
+// ---- Multi-sheet management ----
+function switchCallSheet(i) { csIndex = i; renderCallSheet(); }
+function addCallSheet() {
+  updateProject(p => {
+    ensureCallSheets(p);
+    p.callSheets.push(newCallSheetObject(p, p.callSheets.length + 1));
+  });
+  const fresh = getProject();
+  csIndex = fresh.callSheets.length - 1;
+  renderCallSheet();
+  showToast('New call sheet day added', 'success');
+}
+function deleteCallSheet(i) {
+  const fresh = getProject();
+  if (fresh.callSheets.length <= 1) { showToast('Cannot delete the only call sheet', 'warning'); return; }
+  if (!confirm('Delete this call sheet day?')) return;
+  updateProject(p => { p.callSheets.splice(i, 1); });
+  csIndex = Math.max(0, csIndex - 1);
+  renderCallSheet();
+}
+
+// ---- Field updates ----
 function updateCS(field, val) {
-  updateProject(p => {
-    if (!p.callSheets) p.callSheets = [{}];
-    if (!p.callSheets[0]) p.callSheets[0] = {};
-    p.callSheets[0][field] = val;
-  });
+  updateProject(p => { getCS(p)[field] = val; });
 }
-
+function updateCSWeather(field, val) {
+  updateProject(p => { const cs = getCS(p); if(!cs.weather) cs.weather={}; cs.weather[field] = val; });
+}
 function addCSScene() {
-  updateProject(p => {
-    if (!p.callSheets) p.callSheets = [{}];
-    if (!p.callSheets[0].scenes) p.callSheets[0].scenes = [];
-    p.callSheets[0].scenes.push({ num:'', heading:'', pages:'' });
-  });
+  updateProject(p => { getCS(p).scenes.push({ num:'', heading:'', dn:'Day', pages:'', cast:'' }); });
   renderCallSheet();
 }
-
 function removeCSScene(i) {
-  updateProject(p => { p.callSheets?.[0]?.scenes?.splice(i, 1); });
+  updateProject(p => { getCS(p).scenes.splice(i, 1); });
+  renderCallSheet();
+}
+function updateCSScene(i, field, val) {
+  updateProject(p => { const s = getCS(p).scenes[i]; if(s) s[field] = val; });
+}
+function addDeptCall() {
+  updateProject(p => { getCS(p).deptCalls.push({ dept:'Camera', time:'07:00', notes:'' }); });
+  renderCallSheet();
+}
+function removeDeptCall(i) {
+  updateProject(p => { getCS(p).deptCalls.splice(i, 1); });
+  renderCallSheet();
+}
+function updateDeptCall(i, field, val) {
+  updateProject(p => { const d = getCS(p).deptCalls[i]; if(d) d[field] = val; });
+}
+function updateContactCallTime(id, val) {
+  updateProject(p => { const c = p.contacts?.find(x=>x.id===id); if (c) c.callTime = val; });
+}
+
+// ---- Distribution tracking ----
+function addAllToDistribution() {
+  updateProject(p => {
+    const cs = getCS(p);
+    const existing = new Set(cs.distribution.map(d=>d.contactId));
+    (p.contacts||[]).forEach(c => {
+      if (!existing.has(c.id)) cs.distribution.push({ contactId:c.id, name:c.name, status:'pending', sentAt:null });
+    });
+  });
+  renderCallSheet();
+  showToast('Added all contacts to distribution list', 'success');
+}
+function setDistStatus(i, status) {
+  updateProject(p => {
+    const d = getCS(p).distribution[i];
+    if (d) { d.status = status; if(status==='sent'&&!d.sentAt) d.sentAt = new Date().toISOString(); }
+  });
+  renderCallSheet();
+}
+function removeDistribution(i) {
+  updateProject(p => { getCS(p).distribution.splice(i, 1); });
   renderCallSheet();
 }
 
-function updateCSScene(i, field, val) {
-  updateProject(p => {
-    if (p.callSheets?.[0]?.scenes?.[i]) p.callSheets[0].scenes[i][field] = val;
-  });
+// ---- Templates ----
+function getCSTemplates() { return JSON.parse(localStorage.getItem('cf_cs_templates') || '[]'); }
+function saveCSTemplates(t) { localStorage.setItem('cf_cs_templates', JSON.stringify(t)); }
+function saveCallSheetTemplate() {
+  const name = prompt('Template name:', 'Standard Day');
+  if (!name) return;
+  const fresh = getProject();
+  const cs = JSON.parse(JSON.stringify(fresh.callSheets[csIndex]));
+  // strip day-specific data
+  delete cs.id; cs.date=''; cs.scenes=[]; cs.distribution=[];
+  const templates = getCSTemplates();
+  templates.push({ id:'tpl_'+Date.now(), name, data:cs });
+  saveCSTemplates(templates);
+  showToast(`Template "${name}" saved`, 'success');
 }
-
-function updateContactCallTime(id, val) {
+function showTemplatePicker() {
+  const templates = getCSTemplates();
+  if (!templates.length) { showToast('No templates saved yet. Use "Save as Template" first.', 'info'); return; }
+  const modal = document.createElement('div');
+  modal.id = 'csTemplateModal';
+  modal.className = 'modal-overlay fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4';
+  modal.innerHTML = `
+    <div class="bg-dark-800 rounded-2xl w-full max-w-md border border-gray-700 shadow-2xl">
+      <div class="p-5 border-b border-gray-700 flex items-center justify-between">
+        <h2 class="text-lg font-bold">Call Sheet Templates</h2>
+        <button onclick="document.getElementById('csTemplateModal').remove()" class="text-gray-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </div>
+      <div class="p-5 space-y-2 max-h-80 overflow-y-auto">
+        ${templates.map(t=>`
+          <div class="flex items-center gap-2 bg-dark-900 border border-gray-700 rounded-lg p-3">
+            <span class="text-sm flex-1">${escapeHtml(t.name)}</span>
+            <button onclick="applyCSTemplate('${t.id}')" class="btn btn-primary btn-sm">Apply</button>
+            <button onclick="deleteCSTemplate('${t.id}')" class="text-red-500 hover:text-red-400 text-xs">Delete</button>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
+}
+function applyCSTemplate(id) {
+  const t = getCSTemplates().find(x=>x.id===id);
+  if (!t) return;
   updateProject(p => {
-    const c = p.contacts?.find(x=>x.id===id);
-    if (c) c.callTime = val;
+    const cs = getCS(p);
+    Object.keys(t.data).forEach(k => { if(k!=='id') cs[k] = JSON.parse(JSON.stringify(t.data[k])); });
   });
+  document.getElementById('csTemplateModal')?.remove();
+  renderCallSheet();
+  showToast(`Template "${t.name}" applied`, 'success');
+}
+function deleteCSTemplate(id) {
+  saveCSTemplates(getCSTemplates().filter(t=>t.id!==id));
+  document.getElementById('csTemplateModal')?.remove();
+  showTemplatePicker();
 }
 
 function printCallSheet() {
   window.print();
 }
+
+// Expose Call Sheet Pro functions
+['switchCallSheet','addCallSheet','deleteCallSheet','updateCS','updateCSWeather','addCSScene',
+ 'removeCSScene','updateCSScene','addDeptCall','removeDeptCall','updateDeptCall','updateContactCallTime',
+ 'addAllToDistribution','setDistStatus','removeDistribution','saveCallSheetTemplate','showTemplatePicker',
+ 'applyCSTemplate','deleteCSTemplate','printCallSheet'].forEach(fn => { window[fn] = eval(fn); });
 
 // ============================================================
 // CALENDAR MODULE

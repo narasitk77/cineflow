@@ -314,6 +314,58 @@ textarea.input-field { resize: vertical; }
   justify-content: space-between;
 }
 
+/* ===== CALL SHEET PRO ===== */
+.cs-day-tab {
+  padding: 6px 14px;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  color: #9ca3af;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.cs-day-tab:hover { color: #f3f4f6; background: #1e2330; }
+.cs-day-tab.active {
+  background: #1e2330;
+  border-color: #374151;
+  color: #0ea5e9;
+  font-weight: 600;
+}
+.cs-day-tab-add {
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px dashed #374151;
+  color: #6b7280;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.cs-day-tab-add:hover { color: #0ea5e9; border-color: #0ea5e9; }
+
+.cs-dist-status {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: #141824;
+  border: 1px solid #374151;
+  color: #6b7280;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.cs-dist-status:hover { border-color: #4b5563; color: #9ca3af; }
+.cs-dist-status.active-pending   { background: rgba(107,114,128,0.2); color: #9ca3af; border-color: #6b7280; }
+.cs-dist-status.active-sent      { background: rgba(14,165,233,0.2); color: #38bdf8; border-color: #0ea5e9; }
+.cs-dist-status.active-viewed    { background: rgba(245,158,11,0.2); color: #fbbf24; border-color: #f59e0b; }
+.cs-dist-status.active-confirmed { background: rgba(16,185,129,0.2); color: #34d399; border-color: #10b981; }
+
 /* ===== KANBAN ===== */
 .kanban-col {
   background: #1e2330;
