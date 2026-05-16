@@ -5,7 +5,18 @@
 > and **13 production modules** matching StudioBinder feature parity.
 > Built as a pure static HTML/CSS/JavaScript SPA.
 
-**Current version:** `v1.4.0` (2026-05-13)
+**Current version:** `v1.8.0` (2026-05-13)
+
+---
+
+## ⭐ Pro Features (v1.5 – v1.8)
+
+| Area | What you get |
+|------|--------------|
+| **Call Sheet Pro** | Multi-day call sheets, department call times, weather block, schedule block, emergency/safety block, Google Maps link, distribution tracking (Pending→Sent→Viewed→Confirmed), reusable templates |
+| **Script Pro** | Title page editor, revision tracking with industry colored pages (White→Blue→Pink→…), estimated page count, page-eighths, script sides generator |
+| **Breakdown Pro** | Project-wide element database with tag autocomplete, DOOD report (Day Out of Days — cast × shoot-days with S/W/H/F codes) |
+| **Collaboration** | Comments on any module, auto-tracked activity log, 5 project templates, configurable author |
 
 ---
 
