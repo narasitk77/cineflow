@@ -376,6 +376,27 @@ textarea.input-field { resize: vertical; }
   flex-shrink: 0;
 }
 
+/* ===== BREAKDOWN PRO — DOOD ===== */
+.dood-table { border-collapse: collapse; width: 100%; font-size: 12px; }
+.dood-cell {
+  border: 1px solid #374151;
+  padding: 5px 8px;
+  text-align: center;
+  white-space: nowrap;
+}
+.dood-name { text-align: left; font-weight: 600; min-width: 110px; }
+.dood-head { background: #141824; color: #9ca3af; font-weight: 700; }
+.dood-work { background: rgba(16,185,129,0.18); color: #34d399; font-weight: 600; }
+.dood-hold { background: rgba(245,158,11,0.18); color: #fbbf24; font-weight: 600; }
+.dood-total { background: #141824; font-weight: 700; color: #34d399; }
+.dood-legend {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 11px;
+}
+
 /* ===== KANBAN ===== */
 .kanban-col {
   background: #1e2330;

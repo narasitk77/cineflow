@@ -114,7 +114,7 @@ window.avatarColor = avatarColor;
 window.initials = initials;
 
 // ===== SEEN/UNSEEN BADGES (for changelog "NEW" badge) =====
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.7.0';
 function getLastSeenVersion() { return localStorage.getItem('cf_lastSeenVersion') || '0.0.0'; }
 function markVersionSeen() { localStorage.setItem('cf_lastSeenVersion', APP_VERSION); }
 function hasUnseenChangelog() { return getLastSeenVersion() !== APP_VERSION; }
@@ -125,6 +125,32 @@ window.hasUnseenChangelog = hasUnseenChangelog;
 
 // ===== CHANGELOG DATA =====
 const CHANGELOG = [
+  {
+    version: '1.7.0',
+    date: '2026-05-13',
+    title: 'Breakdown Pro — element database & DOOD report',
+    sections: [
+      {
+        title: '✨ Breakdown Pro',
+        items: [
+          'Element Database — every tagged element collected, with scene usage counts',
+          'Autocomplete when tagging — suggests elements already used in the project',
+          'Category legend now shows element count per category',
+          'Element DB panel — browse all elements grouped by category'
+        ]
+      },
+      {
+        title: '📅 DOOD Report (Day Out of Days)',
+        items: [
+          'Cast × shoot-days grid with industry codes: S/W/H/F + combos (SW, WF, SWF)',
+          'Auto-computed from breakdown cast tags + stripboard day assignments',
+          'Hold-day tracking — days a cast member is on payroll but not working',
+          'Per-cast total work-days and hold-days columns',
+          'Print-friendly DOOD export'
+        ]
+      }
+    ]
+  },
   {
     version: '1.6.0',
     date: '2026-05-13',

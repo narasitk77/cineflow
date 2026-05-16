@@ -6,6 +6,47 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.7.0] — 2026-05-13
+
+### 📋 Breakdown Pro — element database & DOOD report
+
+The Script Breakdown module gains a reusable element database and a
+Day Out of Days cast-scheduling report.
+
+---
+
+### ✨ Added
+
+#### Element Database
+- Every tagged element is collected into a project-wide database
+- **Autocomplete** when tagging — the tag input suggests elements already
+  used elsewhere in the project (shared `<datalist>`)
+- Category legend shows a live count per category
+- **Element DB panel** — browse every element grouped by category, each
+  showing which scenes use it and how many times
+- `buildElementDB()` helper aggregates `{ category: [{ name, scenes:[] }] }`
+
+#### DOOD Report (Day Out of Days)
+- Classic AD scheduling report: **cast × shoot-days** grid
+- Industry status codes: **S**tart · **W**ork · **H**old · **F**inish,
+  plus combined SW / WF / SWF
+- Auto-computed from breakdown **cast** tags + **stripboard** day assignments
+- **Hold-day tracking** — days a cast member sits between their first and
+  last shoot day without working (still on payroll)
+- Per-cast totals: total work-days (∑W) and hold-days (∑H)
+- Print-friendly DOOD export (opens a clean print window)
+- Graceful empty states (prompts to schedule the stripboard / tag cast first)
+
+---
+
+### 📁 New File
+
+```
+js/breakdown-pro.js   # ~230 lines — element DB panel + DOOD report
+```
+
+---
+
 ## [1.6.0] — 2026-05-13
 
 ### ✍️ Script Pro — title page, revisions, page count, sides

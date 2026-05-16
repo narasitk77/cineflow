@@ -489,22 +489,38 @@ function renderBreakdown() {
   // Breakdown data
   const bd = p.breakdown || { scenes: [] };
 
+  // Element database — every unique tag used anywhere, per category
+  const elementDB = buildElementDB(bd);
+  const allElementNames = [...new Set(Object.values(elementDB).flatMap(arr => arr.map(e => e.name)))];
+
   el.innerHTML = `
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
       <div>
         <h2 class="text-xl font-bold">Script Breakdown</h2>
-        <p class="text-xs text-gray-500 mt-0.5">Tag elements by category for each scene</p>
+        <p class="text-xs text-gray-500 mt-0.5">${(bd.scenes||[]).length} scenes · ${allElementNames.length} unique elements tagged</p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-2 flex-wrap">
+        <button onclick="showElementDatabase()" class="btn btn-secondary btn-sm" title="View all elements">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7M4 7c0-2 1-3 3-3h10c2 0 3 1 3 3M4 7h16M9 11h6"/></svg>
+          <span class="hidden sm:inline">Element DB</span>
+        </button>
+        <button onclick="showDOODReport()" class="btn btn-secondary btn-sm" title="Day Out of Days report">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+          <span class="hidden sm:inline">DOOD</span>
+        </button>
         <button onclick="addBreakdownScene()" class="bg-brand-500 hover:bg-brand-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           Add Scene
         </button>
       </div>
     </div>
+    <!-- Element autocomplete datalist (shared) -->
+    <datalist id="bd-element-list">
+      ${allElementNames.map(n => `<option value="${escapeHtml(n)}"></option>`).join('')}
+    </datalist>
     <!-- Category Legend -->
     <div class="flex flex-wrap gap-2 mb-4">
-      ${BREAKDOWN_CATEGORIES.map(c=>`<span class="breakdown-tag" style="background:${c.bg};color:${c.color}">${c.label}</span>`).join('')}
+      ${BREAKDOWN_CATEGORIES.map(c=>`<span class="breakdown-tag" style="background:${c.bg};color:${c.color}">${c.label} ${(elementDB[c.key]||[]).length?`<span style="opacity:0.6">${(elementDB[c.key]||[]).length}</span>`:''}</span>`).join('')}
     </div>
     <!-- Scenes -->
     <div id="breakdownList" class="space-y-3">
@@ -515,6 +531,23 @@ function renderBreakdown() {
     </div>
   `;
 }
+
+// Build element database: { categoryKey: [{ name, scenes:[sceneNums] }] }
+function buildElementDB(bd) {
+  const db = {};
+  BREAKDOWN_CATEGORIES.forEach(c => { db[c.key] = []; });
+  (bd.scenes || []).forEach(scene => {
+    BREAKDOWN_CATEGORIES.forEach(c => {
+      (scene.elements?.[c.key] || []).forEach(name => {
+        let entry = db[c.key].find(e => e.name === name);
+        if (!entry) { entry = { name, scenes: [] }; db[c.key].push(entry); }
+        entry.scenes.push(scene.num || '?');
+      });
+    });
+  });
+  return db;
+}
+window.buildElementDB = buildElementDB;
 
 function renderBreakdownScene(scene, i) {
   const elems = scene.elements || {};
@@ -543,7 +576,7 @@ function renderBreakdownScene(scene, i) {
           <select id="bdCat-${i}" class="input-field text-xs py-1" style="width:130px">
             ${BREAKDOWN_CATEGORIES.map(c=>`<option value="${c.key}">${c.label}</option>`).join('')}
           </select>
-          <input type="text" id="bdTag-${i}" class="input-field text-xs py-1 flex-1" placeholder="Element name, press Enter"
+          <input type="text" id="bdTag-${i}" list="bd-element-list" class="input-field text-xs py-1 flex-1" placeholder="Element name (autocompletes from DB), press Enter"
             onkeydown="if(event.key==='Enter')addBreakdownTag(${i})">
           <button onclick="addBreakdownTag(${i})" class="bg-dark-800 border border-gray-700 hover:border-gray-600 text-gray-300 px-2 py-1 rounded-lg text-xs">Add</button>
         </div>
